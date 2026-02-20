@@ -30,7 +30,7 @@ if __name__ == "__main__":
     # STEP 3: define model
     model = GRASP(
         dataset=sample_dataset,
-        cluster_num=10,
+        cluster_num=2,
     )
 
     # STEP 4: define trainer
