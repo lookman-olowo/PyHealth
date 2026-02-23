@@ -64,7 +64,7 @@ class ReadmissionPredictionMIMIC3(BaseTask):
                 - 'patient_id': MIMIC3 subject_id.
                 - 'conditions': MIMIC3 diagnoses_icd table ICD-9 codes.
                 - 'procedures': MIMIC3 procedures_icd table ICD-9 codes.
-                - 'drugs': MIMIC3 prescriptions table drug column entries.
+                - 'drugs': MIMIC3 prescriptions table NDC (National Drug Code) entries.
                 - 'readmission': binary label.
 
         Raises:
@@ -198,7 +198,7 @@ class ReadmissionPredictionMIMIC4(BaseTask):
                 - 'patient_id': MIMIC4 subject_id.
                 - 'conditions': MIMIC4 diagnoses_icd table ICD-9 or ICD-10 codes.
                 - 'procedures': MIMIC4 procedures_icd table ICD-9 or ICD-10 codes.
-                - 'drugs': MIMIC4 prescriptions table drug column entries.
+                - 'drugs': MIMIC4 prescriptions table NDC (National Drug Code) entries.
                 - 'readmission': binary label.
 
         Raises:
