@@ -73,7 +73,7 @@ def run_one(combo, train_dl, val_dl, test_dl, sample_dataset, results_path, moni
         val_dataloader=val_dl,
         epochs=50,
         monitor=monitor,
-        patience=10,
+        patience=15,
         weight_decay=combo["weight_decay"],
         optimizer_params={"lr": combo["lr"]},
     )
