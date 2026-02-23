@@ -41,6 +41,7 @@ def random_init(
     """
     num_points = dataset.size(0)
     dimension = dataset.size(1)
+    num_centers = min(num_centers, num_points)
 
     indices = torch.tensor(
         np.array(random.sample(range(num_points), k=num_centers)), dtype=torch.long
@@ -306,7 +307,6 @@ class GRASPLayer(nn.Module):
             hidden_t, _ = self.backbone(input, mask=mask, static=static)
         else:
             _, hidden_t = self.backbone(input, mask)
-        hidden_t = torch.squeeze(hidden_t, 0)
 
         centers, codes = cluster(hidden_t, self.cluster_num, input.device)
 
