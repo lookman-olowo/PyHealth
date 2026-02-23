@@ -174,5 +174,31 @@ class TestGRASP(unittest.TestCase):
         self.assertFalse(torch.isnan(ret["loss"]))
 
 
+    def test_batch_smaller_than_cluster_num(self):
+        """Test GRASP handles batch_size < cluster_num without crashing.
+
+        Regression test: random_init called random.sample(range(num_points),
+        num_centers) which raises ValueError when num_centers > num_points.
+        Fixed by clamping: num_centers = min(num_centers, num_points).
+        """
+        model = GRASP(
+            dataset=self.dataset,
+            embedding_dim=16,
+            hidden_dim=16,
+            cluster_num=4,  # more clusters than batch_size=1
+            block="GRU",
+        )
+
+        train_loader = get_dataloader(self.dataset, batch_size=1, shuffle=False)
+        data_batch = next(iter(train_loader))
+
+        with torch.no_grad():
+            ret = model(**data_batch)
+
+        self.assertIn("loss", ret)
+        self.assertIn("y_prob", ret)
+        self.assertEqual(ret["y_prob"].shape[0], 1)
+
+
 if __name__ == "__main__":
     unittest.main()
