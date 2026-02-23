@@ -279,7 +279,7 @@ class MortalityPredictionMIMIC4(BaseTask):
                 [getattr(event, "icd_code", None) for event in procedures_icd]
             )
             drugs = self._clean_sequence(
-                [getattr(event, "drug", None) for event in prescriptions]
+                [getattr(event, "ndc", None) for event in prescriptions]
             )
 
             # Exclude visits without condition, procedure, or drug code
