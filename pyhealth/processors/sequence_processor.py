@@ -8,11 +8,11 @@ from .base_processor import FeatureProcessor, TokenProcessorInterface
 
 @register_processor("sequence")
 class SequenceProcessor(FeatureProcessor, TokenProcessorInterface):
-    """
-    Feature processor for encoding categorical sequences (e.g., medical codes) into numerical indices.
+    """Feature processor for encoding categorical sequences.
 
-    Supports single or multiple tokens (e.g., single diagnosis or list of procedures).
-    Can build vocabulary on the fly if not provided.
+    Encodes medical codes (e.g., diagnoses, procedures) into numerical
+    indices. Supports single or multiple tokens and can build vocabulary
+    on the fly if not provided.
 
     Args:
         code_mapping: optional tuple of (source_vocabulary, target_vocabulary)
@@ -48,6 +48,12 @@ class SequenceProcessor(FeatureProcessor, TokenProcessorInterface):
         return mapped if mapped else [token]
 
     def fit(self, samples: Iterable[Dict[str, Any]], field: str) -> None:
+        """Build vocabulary from samples, applying code mapping if set.
+
+        Args:
+            samples: iterable of sample dicts.
+            field: key whose values are token lists.
+        """
         for sample in samples:
             for token in sample[field]:
                 if token is None:
@@ -80,14 +86,12 @@ class SequenceProcessor(FeatureProcessor, TokenProcessorInterface):
         """Remove specified vocabularies from the processor."""
         keep = set(self.code_vocab.keys()) - tokens | {"<pad>", "<unk>"}
         order = [k for k, v in sorted(self.code_vocab.items(), key=lambda x: x[1]) if k in keep]
-        
         self.code_vocab = { k : i for i, k in enumerate(order) }
 
     def retain(self, tokens: set[str]):
         """Retain only the specified vocabularies in the processor."""
         keep = set(self.code_vocab.keys()) & tokens | {"<pad>", "<unk>"}
         order = [k for k, v in sorted(self.code_vocab.items(), key=lambda x: x[1]) if k in keep]
-        
         self.code_vocab = { k : i for i, k in enumerate(order) }
 
     def add(self, tokens: set[str]):
