@@ -132,17 +132,18 @@ class TestGRASP(unittest.TestCase):
 
     def test_custom_hyperparameters(self):
         """Test GRASP model with custom hyperparameters."""
+        torch.manual_seed(42)
         model = GRASP(
             dataset=self.dataset,
-            embedding_dim=32,
-            hidden_dim=32,
+            embedding_dim=4,
+            hidden_dim=4,
             cluster_num=2,
             block="GRU",
             dropout=0.3,
         )
 
-        self.assertEqual(model.embedding_dim, 32)
-        self.assertEqual(model.hidden_dim, 32)
+        self.assertEqual(model.embedding_dim, 4)
+        self.assertEqual(model.hidden_dim, 4)
 
         train_loader = get_dataloader(self.dataset, batch_size=2, shuffle=True)
         data_batch = next(iter(train_loader))

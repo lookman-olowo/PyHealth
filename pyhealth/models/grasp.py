@@ -1,7 +1,18 @@
+"""GRASP model for health status representation learning.
+
+This module implements the GRASP (Generic fRAmework for health Status
+representation learning based on incorporating knowledge from Similar
+Patients) model from Ma et al., AAAI 2021.
+
+The model clusters patient representations via k-means, refines
+cluster-level knowledge with a graph convolutional network, and blends
+it back into individual patient embeddings through a learned gate.
+"""
+
 import copy
 import math
 import random
-from typing import Dict, Optional
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import torch
@@ -15,7 +26,19 @@ from pyhealth.models.embedding import EmbeddingModel
 from pyhealth.models.rnn import RNNLayer
 
 
-def random_init(dataset, num_centers, device):
+def random_init(
+    dataset: torch.Tensor, num_centers: int, device: torch.device
+) -> torch.Tensor:
+    """Randomly select initial cluster centers from the dataset.
+
+    Args:
+        dataset: tensor of shape [num_points, dimension].
+        num_centers: number of cluster centers to select.
+        device: target device for the output tensor.
+
+    Returns:
+        Tensor of shape [num_centers, dimension] with selected centers.
+    """
     num_points = dataset.size(0)
     dimension = dataset.size(1)
 
@@ -29,8 +52,18 @@ def random_init(dataset, num_centers, device):
     return centers
 
 
-# Compute for each data point the closest center
-def compute_codes(dataset, centers):
+def compute_codes(
+    dataset: torch.Tensor, centers: torch.Tensor
+) -> torch.Tensor:
+    """Assign each data point to its closest cluster center.
+
+    Args:
+        dataset: tensor of shape [num_points, dimension].
+        centers: tensor of shape [num_centers, dimension].
+
+    Returns:
+        Long tensor of shape [num_points] with cluster assignments.
+    """
     num_points = dataset.size(0)
     dimension = dataset.size(1)
     num_centers = centers.size(0)
@@ -55,8 +88,23 @@ def compute_codes(dataset, centers):
     return codes
 
 
-# Compute new centers as means of the data points forming the clusters
-def update_centers(dataset, codes, num_centers, device):
+def update_centers(
+    dataset: torch.Tensor,
+    codes: torch.Tensor,
+    num_centers: int,
+    device: torch.device,
+) -> torch.Tensor:
+    """Recompute cluster centers as the mean of assigned data points.
+
+    Args:
+        dataset: tensor of shape [num_points, dimension].
+        codes: long tensor of shape [num_points] with cluster assignments.
+        num_centers: number of clusters.
+        device: target device for the output tensor.
+
+    Returns:
+        Tensor of shape [num_centers, dimension] with updated centers.
+    """
     num_points = dataset.size(0)
     dimension = dataset.size(1)
     centers = torch.zeros(num_centers, dimension, dtype=torch.float).to(device=device)
@@ -72,7 +120,20 @@ def update_centers(dataset, codes, num_centers, device):
     return centers
 
 
-def cluster(dataset, num_centers, device):
+def cluster(
+    dataset: torch.Tensor, num_centers: int, device: torch.device
+) -> Tuple[torch.Tensor, torch.Tensor]:
+    """Run k-means clustering until convergence or 1000 iterations.
+
+    Args:
+        dataset: tensor of shape [num_points, dimension].
+        num_centers: number of clusters.
+        device: target device for computation.
+
+    Returns:
+        Tuple of (centers, codes) where centers has shape
+        [num_centers, dimension] and codes has shape [num_points].
+    """
     centers = random_init(dataset, num_centers, device)
     codes = compute_codes(dataset, centers)
     num_iterations = 0
@@ -91,7 +152,15 @@ def cluster(dataset, num_centers, device):
 
 
 class GraphConvolution(nn.Module):
-    def __init__(self, in_features, out_features, bias=True):
+    """Single-layer graph convolution (Kipf & Welling, ICLR 2017).
+
+    Args:
+        in_features: size of each input sample.
+        out_features: size of each output sample.
+        bias: if ``True``, adds a learnable bias. Default: ``True``.
+    """
+
+    def __init__(self, in_features: int, out_features: int, bias: bool = True):
         super(GraphConvolution, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
@@ -217,8 +286,22 @@ class GRASPLayer(nn.Module):
         y_hard = (y_hard - y).detach() + y
         return y_hard
 
-    def grasp_encoder(self, input, static=None, mask=None):
+    def grasp_encoder(
+        self,
+        input: torch.Tensor,
+        static: Optional[torch.Tensor] = None,
+        mask: Optional[torch.Tensor] = None,
+    ) -> torch.Tensor:
+        """Encode patient sequences with backbone + cluster-aware GCN.
 
+        Args:
+            input: tensor of shape [batch_size, seq_len, input_dim].
+            static: optional static features [batch_size, static_dim].
+            mask: optional mask [batch_size, seq_len].
+
+        Returns:
+            Tensor of shape [batch_size, hidden_dim].
+        """
         if self.block == "ConCare":
             hidden_t, _ = self.backbone(input, mask=mask, static=static)
         else:
