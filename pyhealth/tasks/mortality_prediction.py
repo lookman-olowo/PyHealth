@@ -387,8 +387,13 @@ class MultimodalMortalityPredictionMIMIC4(BaseTask):
         item for itemids in LAB_CATEGORIES.values() for item in itemids
     ]
 
-    def __init__(self):
-        """Initialize the multimodal mortality prediction task."""
+    def __init__(self, **kwargs):
+        """Initialize the multimodal mortality prediction task.
+
+        Args:
+            **kwargs: Passed to :class:`~pyhealth.tasks.BaseTask`, e.g.
+                ``code_mapping``.
+        """
         self.input_schema: Dict[str, str] = {
             "conditions": "nested_sequence",  # Nested by visit
             "procedures": "nested_sequence",  # Nested by visit
@@ -401,6 +406,7 @@ class MultimodalMortalityPredictionMIMIC4(BaseTask):
             "image_path": "text",  # Image path as text string
         }
         self.output_schema: Dict[str, str] = {"mortality": "binary"}
+        super().__init__(**kwargs)
 
     def _clean_sequence(self, sequence: Optional[List[Any]]) -> List[str]:
         """Clean a sequence by removing None values and converting to strings."""
