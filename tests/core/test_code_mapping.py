@@ -215,5 +215,99 @@ class TestCodeMappingSequenceProcessor(unittest.TestCase):
         self.assertIn("NEW", proc.code_vocab)
 
 
+class TestTaskCodeMappingInit(unittest.TestCase):
+    """Tests for passing code_mapping as a task __init__ argument."""
+
+    def test_no_code_mapping_leaves_schema_unchanged(self):
+        """Tasks without code_mapping keep simple string schema."""
+        from pyhealth.tasks import MortalityPredictionMIMIC3
+
+        task = MortalityPredictionMIMIC3()
+        self.assertEqual(task.input_schema["conditions"], "sequence")
+        self.assertEqual(task.input_schema["procedures"], "sequence")
+        self.assertEqual(task.input_schema["drugs"], "sequence")
+
+    def test_code_mapping_upgrades_schema_to_tuples(self):
+        """code_mapping converts string schema entries to (type, kwargs) tuples."""
+        from pyhealth.tasks import MortalityPredictionMIMIC3
+
+        task = MortalityPredictionMIMIC3(
+            code_mapping={
+                "conditions": ("ICD9CM", "CCSCM"),
+                "procedures": ("ICD9PROC", "CCSPROC"),
+            }
+        )
+        # Mapped fields become tuples
+        self.assertEqual(
+            task.input_schema["conditions"],
+            ("sequence", {"code_mapping": ("ICD9CM", "CCSCM")}),
+        )
+        self.assertEqual(
+            task.input_schema["procedures"],
+            ("sequence", {"code_mapping": ("ICD9PROC", "CCSPROC")}),
+        )
+        # Unmapped fields stay as strings
+        self.assertEqual(task.input_schema["drugs"], "sequence")
+
+    def test_code_mapping_ignores_unknown_fields(self):
+        """code_mapping silently ignores fields not in input_schema."""
+        from pyhealth.tasks import MortalityPredictionMIMIC3
+
+        task = MortalityPredictionMIMIC3(
+            code_mapping={"nonexistent_field": ("SRC", "TGT")}
+        )
+        # Schema unchanged
+        self.assertEqual(task.input_schema["conditions"], "sequence")
+
+    def test_code_mapping_does_not_mutate_class_attribute(self):
+        """code_mapping creates instance schema, doesn't modify class attribute."""
+        from pyhealth.tasks import MortalityPredictionMIMIC3
+
+        task_with = MortalityPredictionMIMIC3(
+            code_mapping={"conditions": ("ICD9CM", "CCSCM")}
+        )
+        task_without = MortalityPredictionMIMIC3()
+
+        # Class attribute unchanged
+        self.assertEqual(task_without.input_schema["conditions"], "sequence")
+        # Instance attribute changed
+        self.assertIsInstance(task_with.input_schema["conditions"], tuple)
+
+    def test_code_mapping_with_readmission_task(self):
+        """Tasks with existing __init__ params also accept code_mapping."""
+        from pyhealth.tasks import ReadmissionPredictionMIMIC3
+
+        task = ReadmissionPredictionMIMIC3(
+            code_mapping={"conditions": ("ICD9CM", "CCSCM")}
+        )
+        self.assertEqual(
+            task.input_schema["conditions"],
+            ("sequence", {"code_mapping": ("ICD9CM", "CCSCM")}),
+        )
+        # Original params still work
+        from datetime import timedelta
+        self.assertEqual(task.window, timedelta(days=15))
+
+    def test_code_mapping_mimic4(self):
+        """code_mapping works with MIMIC4 mortality task too."""
+        from pyhealth.tasks import MortalityPredictionMIMIC4
+
+        task = MortalityPredictionMIMIC4(
+            code_mapping={
+                "conditions": ("ICD9CM", "CCSCM"),
+                "drugs": ("NDC", "ATC"),
+            }
+        )
+        self.assertEqual(
+            task.input_schema["conditions"],
+            ("sequence", {"code_mapping": ("ICD9CM", "CCSCM")}),
+        )
+        self.assertEqual(
+            task.input_schema["drugs"],
+            ("sequence", {"code_mapping": ("NDC", "ATC")}),
+        )
+        self.assertEqual(task.input_schema["procedures"], "sequence")
+
+
 if __name__ == "__main__":
     unittest.main()
