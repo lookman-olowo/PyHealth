@@ -63,7 +63,7 @@ class MortalityPredictionMIMIC3(BaseTask):
 
             conditions = [event.icd9_code for event in diagnoses]
             procedures_list = [event.icd9_code for event in procedures]
-            drugs = [event.drug for event in prescriptions]
+            drugs = [event.ndc for event in prescriptions]
 
             # Exclude visits without condition, procedure, or drug code
             if len(conditions) * len(procedures_list) * len(drugs) == 0:
@@ -147,7 +147,7 @@ class MultimodalMortalityPredictionMIMIC3(BaseTask):
             )
             conditions = [event.icd9_code for event in diagnoses]
             procedures_list = [event.icd9_code for event in procedures]
-            drugs = [event.drug for event in prescriptions]
+            drugs = [event.ndc for event in prescriptions]
             # Extract note text - concatenate if multiple exist
             text = ""
             for note in notes:
