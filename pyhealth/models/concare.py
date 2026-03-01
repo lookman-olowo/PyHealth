@@ -126,7 +126,7 @@ class FinalAttentionQKV(nn.Module):
             q = torch.reshape(
                 input_q, (batch_size, self.attention_hidden_dim, 1)
             )  # [batch, hidden, 1]
-            e = torch.matmul(input_k, q).squeeze()  # [batch, time]
+            e = torch.matmul(input_k, q).squeeze(-1)  # [batch, time]
 
         elif self.attention_type == "concat":
             q = input_q.unsqueeze(1).repeat(1, time_step, 1)  # [batch, time, hidden]
@@ -145,7 +145,7 @@ class FinalAttentionQKV(nn.Module):
         a = self.softmax(e)  # [batch, time]
         if self.dropout is not None:
             a = self.dropout(a)
-        v = torch.matmul(a.unsqueeze(1), input_v).squeeze()  # [batch, hidden]
+        v = torch.matmul(a.unsqueeze(1), input_v).squeeze(1)  # [batch, hidden]
 
         return v, a
 
@@ -293,7 +293,7 @@ class MultiHeadedAttention(nn.Module):
             m = torch.cat((m, y), dim=0)
         m_exp = torch.mean(m, dim=1)
         x = m - m_exp[:, None]
-        cov = 1 / (x.size(1) - 1) * x.mm(x.t())
+        cov = 1 / max(x.size(1) - 1, 1) * x.mm(x.t())
         return cov
 
     def forward(
