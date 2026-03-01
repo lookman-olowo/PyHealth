@@ -14,9 +14,9 @@ from pyhealth.tasks.mortality_prediction import MortalityPredictionMIMIC3
 from pyhealth.tasks.readmission_prediction import ReadmissionPredictionMIMIC3
 
 
-# NDC codes are numeric strings (with possible leading zeros), not words.
-# Drug names contain letters like "Aspirin", "Docusate Sodium", etc.
-NDC_PATTERN = re.compile(r"^\d+$")
+# NDC codes are numeric strings (with possible leading zeros), and may include hyphens,
+# but should not contain letters (e.g., "0002-3227-30" is a valid NDC format).
+NDC_PATTERN = re.compile(r"^[0-9-]+$")
 
 
 class TestDrugNDCExtraction(unittest.TestCase):
