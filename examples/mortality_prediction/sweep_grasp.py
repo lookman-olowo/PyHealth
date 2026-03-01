@@ -3,16 +3,22 @@
 Paper runs (embedding strategy x backbone comparison):
     ROOT=/path/to/mimic3
 
-    # ── 1. GRU + code_mapping (primary sweep) ──────────────────────────
+    # ── 1. GRU + code_mapping (primary sweep, 108 configs) ─────────────
+    tmux new -s run1
     python sweep_grasp.py --block GRU --code-mapping --root $ROOT
+    # Ctrl+B, D to detach — tmux attach -t run1 to reconnect
 
-    # ── 2. GRU + no mapping (baseline) ─────────────────────────────────
+    # ── 2. GRU + no mapping (baseline, 108 configs) ──────────────────
+    tmux new -s run2
     python sweep_grasp.py --block GRU --root $ROOT
+    # Ctrl+B, D to detach — tmux attach -t run2 to reconnect
 
     # ── 3. ConCare + code_mapping (done — 72 configs, all F1=0.0) ──────
+    # tmux new -s run3
     # python sweep_grasp.py --block ConCare --code-mapping --root $ROOT
 
     # ── 4. ConCare + no mapping (skip — proven architectural mismatch) ─
+    # tmux new -s run4
     # python sweep_grasp.py --block ConCare --root $ROOT
 
     # ── 5. GRU + KEEP embeddings (after KEEP implementation) ───────────
