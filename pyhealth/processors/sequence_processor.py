@@ -74,6 +74,8 @@ class SequenceProcessor(FeatureProcessor, TokenProcessorInterface):
         """
         indices = []
         for token in value:
+            if token is None:
+                continue  # skip missing values, consistent with fit()
             for mapped in self._map(token):
                 if mapped in self.code_vocab:
                     indices.append(self.code_vocab[mapped])

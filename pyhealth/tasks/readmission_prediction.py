@@ -114,7 +114,7 @@ class ReadmissionPredictionMIMIC3(BaseTask):
             prescriptions = patient.get_events(
                 event_type="prescriptions", filters=[filter]
             )
-            prescriptions = [event.ndc for event in prescriptions]
+            prescriptions = [event.ndc for event in prescriptions if event.ndc]
             if len(prescriptions) == 0:
                 continue
 
@@ -249,7 +249,7 @@ class ReadmissionPredictionMIMIC4(BaseTask):
             prescriptions = patient.get_events(
                 event_type="prescriptions", filters=[filter]
             )
-            prescriptions = [event.ndc for event in prescriptions]
+            prescriptions = [event.ndc for event in prescriptions if event.ndc]
             if len(prescriptions) == 0:
                 continue
 
