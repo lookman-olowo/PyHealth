@@ -198,9 +198,6 @@ class LMMLayer(nn.Module):
             device=x.device, dtype=x.dtype,
         )
 
-        # Compute surprise gradient function
-        grad_fn = torch.func.grad(self._surprise_loss)
-
         # Sequential processing over timesteps
         for t in range(seq_len):
             k_t = keys[:, t, :]    # [B, H]
@@ -216,11 +213,14 @@ class LMMLayer(nn.Module):
                 alpha_t = alpha_all[:, t, :].mean()
 
             # Compute surprise: gradient of associative loss
+            # Create grad_fn per step to avoid closure accumulation
+            grad_fn = torch.func.grad(self._surprise_loss)
             surprise_grad = grad_fn(mem_weights, k_t, v_t)
+            del grad_fn
 
             # Clamp surprise gradients to prevent explosion
             surprise_grad = {
-                name: g.clamp(-1.0, 1.0)
+                name: g.clamp(-1.0, 1.0).detach()
                 for name, g in surprise_grad.items()
             }
 
@@ -230,9 +230,14 @@ class LMMLayer(nn.Module):
                     S[name] = (
                         eta_t * S[name]
                         - theta_t * surprise_grad[name]
-                    )
+                    ).detach()
                 else:
-                    S[name] = -theta_t * surprise_grad[name]
+                    S[name] = (
+                        -theta_t * surprise_grad[name]
+                    ).detach()
+
+            # Explicitly free gradient tensors
+            del surprise_grad
 
             # Update memory weights
             for name in mem_weights:
