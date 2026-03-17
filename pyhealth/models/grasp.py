@@ -23,6 +23,7 @@ from pyhealth.datasets import SampleDataset
 from pyhealth.models import BaseModel
 from pyhealth.models.concare import ConCareLayer
 from pyhealth.models.embedding import EmbeddingModel
+from pyhealth.models.lmm import LMMLayer
 from pyhealth.models.rnn import RNNLayer
 
 
@@ -207,7 +208,7 @@ class GRASPLayer(nn.Module):
         cluster_num: number of clusters, default 12. The cluster_num should be no more than the number of samples.
         dropout: dropout rate, default 0.5.
         block: the backbone model used in the GRASP layer
-            ('ConCare', 'LSTM' or 'GRU'), default 'ConCare'.
+            ('ConCare', 'GRU', 'LSTM', or 'LMM'), default 'ConCare'.
 
     Examples:
         >>> from pyhealth.models import GRASPLayer
@@ -243,6 +244,13 @@ class GRASPLayer(nn.Module):
             self.backbone = RNNLayer(input_dim, hidden_dim, rnn_type="GRU", dropout=0)
         elif self.block == "LSTM":
             self.backbone = RNNLayer(input_dim, hidden_dim, rnn_type="LSTM", dropout=0)
+        elif self.block == "LMM":
+            self.backbone = LMMLayer(input_dim, hidden_dim, dropout=0)
+        else:
+            raise ValueError(
+                f"Unknown block type '{self.block}'. "
+                "Supported: 'ConCare', 'GRU', 'LSTM', 'LMM'."
+            )
 
         self.relu = nn.ReLU()
         self.tanh = nn.Tanh()
