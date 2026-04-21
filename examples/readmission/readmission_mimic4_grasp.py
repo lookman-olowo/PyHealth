@@ -11,7 +11,8 @@ from pyhealth.trainer import Trainer
 if __name__ == "__main__":
     # Load MIMIC-III dataset
     base_dataset = MIMIC4Dataset(
-        ehr_root="https://physionet.org/files/mimic-iv-demo/2.2/",
+        # ehr_root="https://physionet.org/files/mimic-iv-demo/2.2/",
+        ehr_root="/home/cmbeard2",
         ehr_tables=["diagnoses_icd", "procedures_icd", "prescriptions"],
         cache_dir=tempfile.TemporaryDirectory().name,
         dev=False,
@@ -19,13 +20,8 @@ if __name__ == "__main__":
     
     base_dataset.stats()
 
-    # Define task with code mapping
+    # Define task without code mapping
     task = ReadmissionPredictionMIMIC4(exclude_minors=False)
-    task.input_schema = {
-        "conditions": ("sequence", {"code_mapping": ("ICD9CM", "CCSCM")}),
-        "procedures": ("sequence", {"code_mapping": ("ICD9PROC", "CCSPROC")}),
-        "drugs": ("sequence", {"code_mapping": ("NDC", "ATC")}),
-    }
 
     samples = base_dataset.set_task(task)
 
@@ -73,7 +69,7 @@ if __name__ == "__main__":
         embedding_dim=100,
         hidden_dim=32,
         cluster_num=8,
-        block="ConCare",
+        block="GRU",
         dropout=0.5,
     )
 
@@ -101,7 +97,7 @@ if __name__ == "__main__":
     test_results = trainer.evaluate(test_dataloader)
 
     print("\n" + "=" * 50)
-    print("Test Set Performance (WITH code_mapping)")
+    print("Test Set Performance (NO code_mapping)")
     print("=" * 50)
     for metric, value in test_results.items():
         print(f"{metric}: {value:.4f}")
