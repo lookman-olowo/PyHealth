@@ -74,7 +74,7 @@ if __name__ == "__main__":
         embedding_dim=100,
         hidden_dim=32,
         cluster_num=8,
-        block="ConCare",
+        block="GRU",
         dropout=0.5,
     )
 
